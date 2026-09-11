@@ -28,37 +28,41 @@
         </div>
     </div>
 
-    <script>
-        let bleCharacteristic;
+<script>
+    let bleCharacteristic;
 
-        async function connect() {
-            try {
-                document.getElementById('status').innerText = '搜尋中...';
-                // 請求連接帶有特定 UUID 的藍牙裝置
+    async function connect() {
+        try {
+            document.getElementById('status').innerText = '搜尋中...請選擇你的裝置';
+            
+            // ★ 終極寬鬆設定：不限名字、不限服務，抓取所有可見藍牙裝置 ★
             const device = await navigator.bluetooth.requestDevice({
-                acceptAllDevices: true, 
+                acceptAllDevices: true,
                 optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
             });
 
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-                bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
-                
-                document.getElementById('status').innerText = '連線成功！';
-                document.getElementById('connectBtn').style.display = 'none';
-                document.getElementById('controls').style.display = 'block';
-            } catch (error) {
-                console.log(error);
-                document.getElementById('status').innerText = '連線失敗或取消';
-            }
+            document.getElementById('status').innerText = '連線 GATT 中...';
+            const server = await device.gatt.connect();
+            
+            document.getElementById('status').innerText = '尋找通道中...';
+            const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+            bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+            
+            document.getElementById('status').innerText = '連線成功！';
+            document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+        } catch (error) {
+            console.log(error);
+            document.getElementById('status').innerText = '連線失敗或取消';
         }
+    }
 
-        async function sendCmd(cmd) {
-            if (bleCharacteristic) {
-                let encoder = new TextEncoder();
-                await bleCharacteristic.writeValue(encoder.encode(cmd));
-            }
+    async function sendCmd(cmd) {
+        if (bleCharacteristic) {
+            let encoder = new TextEncoder();
+            await bleCharacteristic.writeValue(encoder.encode(cmd));
         }
-    </script>
+    }
+</script>
 </body>
 </html>
