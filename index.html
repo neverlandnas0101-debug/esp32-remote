@@ -44,9 +44,22 @@
         }
         #connectBtn:active { background-color: #0056b3; }
 
+        #disconnectBtn {
+            font-size: 14px;
+            padding: 6px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            display: none;
+            margin-top: 5px;
+        }
+        #disconnectBtn:active { background-color: #5a6268; }
+
         #status { font-size: 13px; color: #d9534f; font-weight: bold; }
 
-        /* 雙手遙控器面板：直式手機固定左右並列 */
+        /* 雙手遙控器面板 */
         #controls { 
             display: none; 
             margin-top: 15px; 
@@ -55,6 +68,33 @@
             margin-left: auto;
             margin-right: auto;
         }
+
+        /* 自動模式切換按鈕專區 */
+        .mode-container {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .btn-auto {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px;
+            width: 100%;
+            max-width: 300px;
+            background-color: #ffc107;
+            color: #333;
+            border: 2px solid #e0a800;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            transition: all 0.1s ease;
+        }
+        .btn-auto.active {
+            background-color: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+        .btn-auto:active { transform: scale(0.97); }
+
         .joystick-container {
             display: flex;
             justify-content: space-between;
@@ -81,7 +121,6 @@
             margin-bottom: 2px;
         }
 
-        /* 專門對應直式螢幕的大按鈕 (寬高 72~80px) */
         .d-btn {
             font-size: 32px;
             background-color: #ffffff;
@@ -102,7 +141,6 @@
             transform: scale(0.93);
         }
 
-        /* 急停按鈕：橫向長條，醒目安全 */
         .btn-stop {
             background-color: #ff4d4d;
             border: 2px solid #d93838;
@@ -130,19 +168,23 @@
 
     <div class="bt-card">
         <button id="connectBtn" onclick="connect()">📶 搜尋並開啟藍牙連線</button>
+        <button id="disconnectBtn" onclick="disconnectBLE()">🔌 斷開藍牙連線</button>
         <div id="status">狀態：尚未與車子建立藍牙連線</div>
     </div>
 
     <div id="controls">
+        <!-- 新增：自動模式切換按鈕 -->
+        <div class="mode-container">
+            <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動模式 (關閉)</button>
+        </div>
+
         <div class="joystick-container">
-            <!-- 左手區域：前後移動 -->
             <div class="stick-group">
                 <span class="group-title">【 前後 】</span>
                 <button class="d-btn" onclick="sendCmd('F')">⬆️</button>
                 <button class="d-btn" onclick="sendCmd('B')">⬇️</button>
             </div>
 
-            <!-- 右手區域：轉向與急停 -->
             <div class="stick-group">
                 <span class="group-title">【 轉向 / 停止 】</span>
                 <button class="btn-stop" onclick="sendCmd('S')">🛑 停止</button>
@@ -155,7 +197,9 @@
     </div>
 
     <script>
+        let bluetoothDevice;
         let bleCharacteristic;
+        let isAutoMode = false; // 記錄目前是否為自動模式
 
         async function connect() {
             try {
@@ -168,22 +212,24 @@
                 statusEl.style.color = '#f0ad4e';
                 statusEl.innerText = '狀態：正在掃描附近的藍牙車...';
                 
-                const device = await navigator.bluetooth.requestDevice({
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
                 });
 
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
                 statusEl.innerText = '狀態：正在建立藍牙通道 (GATT)...';
-                const server = await device.gatt.connect();
+                const server = await bluetoothDevice.gatt.connect();
                 
                 statusEl.innerText = '狀態：正在配置序列埠服務...';
                 const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
                 bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
                 
-                // 連線成功切換狀態
                 statusEl.style.color = '#198754';
                 statusEl.innerText = '狀態：🟢 藍牙已連線，可以開始遙控！';
                 document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('disconnectBtn').style.display = 'block';
                 document.getElementById('controls').style.display = 'block';
             } catch (error) {
                 console.log(error);
@@ -191,6 +237,42 @@
                 statusEl.style.color = '#d9534f';
                 statusEl.innerText = '狀態：❌ 連線失敗或已取消選擇';
             }
+        }
+
+        // 切換自動模式按鈕的邏輯
+        function toggleAutoMode() {
+            isAutoMode = !isAutoMode;
+            const autoBtn = document.getElementById('autoBtn');
+            if (isAutoMode) {
+                autoBtn.classList.add('active');
+                autoBtn.innerText = '🤖 自動模式中 (點擊關閉)';
+                sendCmd('A'); // 發送自動模式指令 'A'
+            } else {
+                autoBtn.classList.remove('active');
+                autoBtn.innerText = '🤖 切換自動模式 (關閉)';
+                sendCmd('S'); // 關閉時發送停止指令 'S' 回到手動
+            }
+        }
+
+        function disconnectBLE() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                bluetoothDevice.gatt.disconnect();
+            }
+            onDisconnected();
+        }
+
+        function onDisconnected() {
+            bleCharacteristic = null;
+            isAutoMode = false;
+            document.getElementById('autoBtn').classList.remove('active');
+            document.getElementById('autoBtn').innerText = '🤖 切換自動模式 (關閉)';
+            
+            const statusEl = document.getElementById('status');
+            statusEl.style.color = '#d9534f';
+            statusEl.innerText = '狀態：🔌 藍牙已斷開連線';
+            document.getElementById('connectBtn').style.display = 'block';
+            document.getElementById('disconnectBtn').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
         }
 
         async function sendCmd(cmd) {
