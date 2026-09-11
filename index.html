@@ -12,7 +12,6 @@
         }
         h2 { color: #333; }
         
-        /* 連線按鈕樣式 */
         #connectBtn { 
             font-size: 20px; 
             padding: 15px 30px; 
@@ -27,7 +26,6 @@
 
         #status { font-size: 16px; color: #666; margin: 15px 0; }
 
-        /* 十字方向鍵容器 */
         #controls { 
             display: none; 
             margin-top: 30px; 
@@ -40,7 +38,6 @@
             justify-content: center;
             align-items: center;
         }
-        /* 方向按鈕共同樣式 */
         .d-btn {
             font-size: 28px;
             background-color: #fff;
@@ -56,7 +53,6 @@
             background-color: #e2e6ea;
             transform: scale(0.95);
         }
-        /* 指定十字排版位置 */
         .btn-up { grid-column: 2; grid-row: 1; }
         .btn-left { grid-column: 1; grid-row: 2; }
         .btn-stop { grid-column: 2; grid-row: 2; background-color: #ff4d4d; color: white; border: none; font-size: 20px; font-weight: bold;}
@@ -70,7 +66,6 @@
     <button id="connectBtn" onclick="connect()">點擊連線藍牙車</button>
     <div id="status">尚未連線</div>
 
-    <!-- 十字方向鍵介面 -->
     <div id="controls">
         <div class="control-grid">
             <button class="d-btn btn-up" onclick="sendCmd('F')">⬆️</button>
@@ -86,9 +81,8 @@
 
         async function connect() {
             try {
-                document.getElementById('status.innerText = '搜尋藍牙裝置中...';
+                document.getElementById('status').innerText = '搜尋藍牙裝置中...';
                 
-                // 採用最寬鬆的全裝置搜尋，確保手機藍牙一定能選到板子
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
