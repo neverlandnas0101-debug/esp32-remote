@@ -18,20 +18,24 @@
             padding: 10px;
         }
         
-        /* 標題與圖片樣式 */
+        /* 標題與放大圖片區塊 (改為上下垂直排列) */
         .title-container {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin: 12px 0;
+            gap: 8px;
+            margin: 15px 0;
         }
         .title-container img {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
+            width: 120px;   /* 放大圖片寬度 */
+            height: 120px;  /* 放大圖片高度 */
+            object-fit: cover; /* 確保照片不變形且填滿圓形或方形 */
+            border-radius: 50%; /* 如果希望照片變成圓形，可以保留這行；如果想要方框可以刪除 */
+            border: 3px solid #007bff; /* 加個漂亮的藍色邊框 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        h2 { color: #333; margin: 0; font-size: 22px; }
+        h2 { color: #333; margin: 0; font-size: 24px; }
         
         .bt-card {
             background: white;
@@ -178,10 +182,10 @@
     </style>
 </head>
 <body>
-    <!-- 標題與圖片區塊 -->
+    <!-- 標題與放大圖片區塊（圖片在上，文字在下） -->
     <div class="title-container">
-        <!-- 這裡使用了一張可愛的機器人圖片作為範例，您也可以把 src 換成您自己的圖片網址 -->
         <img src="LOGO.jpg" alt="奇幻島標誌">
+        <h2>奇幻島 藍牙遙控機器人</h2>
     </div>
 
     <div class="bt-card">
