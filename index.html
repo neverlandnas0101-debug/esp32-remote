@@ -1,131 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STEAM 藍牙遙控車</title>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
         body { 
             text-align: center; 
-            font-family: sans-serif; 
-            background-color: #f0f2f5; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #f4f6f9; 
             margin: 0;
             padding: 10px;
         }
         h2 { color: #333; margin: 10px 0; font-size: 20px; }
         
-        /* 藍牙模式狀態列卡片 */
         .bt-card {
             background: white;
-            max-width: 500px;
-            margin: 10px auto;
-            padding: 15px;
+            max-width: 480px;
+            margin: 5px auto 15px auto;
+            padding: 12px;
             border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         #connectBtn { 
-            font-size: 18px; 
-            padding: 12px 25px; 
+            font-size: 17px; 
+            padding: 10px 24px; 
             background-color: #007bff; 
             color: white; 
             border: none; 
             border-radius: 25px; 
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,123,255,0.25);
         }
         #connectBtn:active { background-color: #0056b3; }
 
-        #status { font-size: 14px; color: #d9534f; font-weight: bold; }
+        #status { font-size: 13px; color: #d9534f; font-weight: bold; }
 
-        /* 雙手搖桿介面 */
+        /* 雙手遙控器面板：直式手機固定左右並列 */
         #controls { 
             display: none; 
             margin-top: 15px; 
+            width: 100%;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .joystick-container {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             align-items: center;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0 20px;
+            width: 100%;
+            padding: 0 10px;
         }
+
         .stick-group {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
         }
         .stick-row {
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
-        /* 超大按鈕設計 */
+
+        .group-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 2px;
+        }
+
+        /* 專門對應直式螢幕的大按鈕 (寬高 72~80px) */
         .d-btn {
             font-size: 32px;
-            background-color: #fff;
-            border: 3px solid #ccc;
-            border-radius: 20px;
+            background-color: #ffffff;
+            border: 2px solid #b8c2cc;
+            border-radius: 18px;
             cursor: pointer;
-            width: 100px;
-            height: 100px;
-            box-shadow: 0 6px 10px rgba(0,0,0,0.1);
-            transition: all 0.1s ease;
+            width: 78px;
+            height: 78px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.08s ease, background-color 0.08s ease;
         }
         .d-btn:active {
             background-color: #d1e7dd;
             border-color: #198754;
-            transform: scale(0.95);
+            transform: scale(0.93);
         }
+
+        /* 急停按鈕：橫向長條，醒目安全 */
         .btn-stop {
             background-color: #ff4d4d;
+            border: 2px solid #d93838;
             color: white;
-            border: none;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            width: 100px;
-            height: 100px;
-            border-radius: 20px;
-            box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+            width: 166px;
+            height: 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(255,77,77,0.25);
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.08s ease;
         }
-        .btn-stop:active { background-color: #cc0000; transform: scale(0.95); }
+        .btn-stop:active { 
+            background-color: #cc0000; 
+            transform: scale(0.95); 
+        }
     </style>
 </head>
 <body>
     <h2>🚗 STEAM 智慧遙控車</h2>
 
-    <!-- 藍牙連接模式控制列 -->
     <div class="bt-card">
-        <div style="font-size: 15px; color: #444; font-weight: bold;">藍牙通訊控制模式</div>
         <button id="connectBtn" onclick="connect()">📶 搜尋並開啟藍牙連線</button>
         <div id="status">狀態：尚未與車子建立藍牙連線</div>
     </div>
 
-    <!-- 雙手搖桿介面：左邊前後，右邊左右與停止 -->
     <div id="controls">
         <div class="joystick-container">
-            <!-- 左側搖桿：前後 -->
+            <!-- 左手區域：前後移動 -->
             <div class="stick-group">
-                <span style="font-weight:bold; color:#555;">【 前後移動 】</span>
+                <span class="group-title">【 前後 】</span>
                 <button class="d-btn" onclick="sendCmd('F')">⬆️</button>
                 <button class="d-btn" onclick="sendCmd('B')">⬇️</button>
             </div>
 
-            <!-- 右側搖桿：左右與停止 -->
+            <!-- 右手區域：轉向與急停 -->
             <div class="stick-group">
-                <span style="font-weight:bold; color:#555;">【 轉向與急停 】</span>
+                <span class="group-title">【 轉向 / 停止 】</span>
+                <button class="btn-stop" onclick="sendCmd('S')">🛑 停止</button>
                 <div class="stick-row">
                     <button class="d-btn" onclick="sendCmd('L')">⬅️</button>
-                    <button class="btn-stop" onclick="sendCmd('S')">停止</button>
                     <button class="d-btn" onclick="sendCmd('R')">➡️</button>
                 </div>
-                <div style="font-size: 12px; color: #888;">(左右轉向)</div>
             </div>
         </div>
     </div>
@@ -135,37 +159,37 @@
 
         async function connect() {
             try {
-                // 檢查瀏覽器是否支援藍牙
                 if (!navigator.bluetooth) {
-                    alert('您的瀏覽器不支援 Web Bluetooth，請改用 Bluefy 或 Chrome！');
+                    alert('您的瀏覽器不支援 Web Bluetooth，請使用 Bluefy App 操作！');
                     return;
                 }
 
-                document.getElementById('status').style.color = '#f0ad4e';
-                document.getElementById('status').innerText = '狀態：正在掃描附近的藍牙車...';
+                const statusEl = document.getElementById('status');
+                statusEl.style.color = '#f0ad4e';
+                statusEl.innerText = '狀態：正在掃描附近的藍牙車...';
                 
-                // 叫出藍牙裝置選擇視窗
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
                 });
 
-                document.getElementById('status').innerText = '狀態：正在建立藍牙通道 (GATT)...';
+                statusEl.innerText = '狀態：正在建立藍牙通道 (GATT)...';
                 const server = await device.gatt.connect();
                 
-                document.getElementById('status').innerText = '狀態：正在配置序列埠服務...';
+                statusEl.innerText = '狀態：正在配置序列埠服務...';
                 const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
                 bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
                 
-                // 連線成功，切換介面
-                document.getElementById('status.style.color'] = '#198754';
-                document.getElementById('status').innerText = '狀態：🟢 藍牙已連線，可以開始遙控！';
+                // 連線成功切換狀態
+                statusEl.style.color = '#198754';
+                statusEl.innerText = '狀態：🟢 藍牙已連線，可以開始遙控！';
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('controls').style.display = 'block';
             } catch (error) {
                 console.log(error);
-                document.getElementById('status').style.color = '#d9534f';
-                document.getElementById('status').innerText = '狀態：❌ 連線失敗或您取消了藍牙選擇';
+                const statusEl = document.getElementById('status');
+                statusEl.style.color = '#d9534f';
+                statusEl.innerText = '狀態：❌ 連線失敗或已取消選擇';
             }
         }
 
@@ -176,7 +200,7 @@
                     await bleCharacteristic.writeValue(encoder.encode(cmd));
                 } catch (err) {
                     console.log('發送失敗:', err);
-                    alert('藍牙連線可能已中斷，請重新整理網頁！');
+                    alert('藍牙連線中斷，請重新整理網頁！');
                 }
             }
         }
