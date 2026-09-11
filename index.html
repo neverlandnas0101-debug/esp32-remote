@@ -14,6 +14,20 @@
         }
         h2 { color: #333; margin: 10px 0; font-size: 20px; }
         
+        /* 藍牙模式狀態列卡片 */
+        .bt-card {
+            background: white;
+            max-width: 500px;
+            margin: 10px auto;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
         #connectBtn { 
             font-size: 18px; 
             padding: 12px 25px; 
@@ -26,9 +40,9 @@
         }
         #connectBtn:active { background-color: #0056b3; }
 
-        #status { font-size: 14px; color: #666; margin: 8px 0; }
+        #status { font-size: 14px; color: #d9534f; font-weight: bold; }
 
-        /* 遙控器主畫面：左右雙搖桿配置 */
+        /* 雙手搖桿介面 */
         #controls { 
             display: none; 
             margin-top: 15px; 
@@ -51,7 +65,7 @@
             display: flex;
             gap: 15px;
         }
-        /* 超大按鈕設計，方便手指操作 */
+        /* 超大按鈕設計 */
         .d-btn {
             font-size: 32px;
             background-color: #fff;
@@ -85,8 +99,13 @@
 </head>
 <body>
     <h2>🚗 STEAM 智慧遙控車</h2>
-    <button id="connectBtn" onclick="connect()">點擊連線藍牙車</button>
-    <div id="status">尚未連線</div>
+
+    <!-- 藍牙連接模式控制列 -->
+    <div class="bt-card">
+        <div style="font-size: 15px; color: #444; font-weight: bold;">藍牙通訊控制模式</div>
+        <button id="connectBtn" onclick="connect()">📶 搜尋並開啟藍牙連線</button>
+        <div id="status">狀態：尚未與車子建立藍牙連線</div>
+    </div>
 
     <!-- 雙手搖桿介面：左邊前後，右邊左右與停止 -->
     <div id="controls">
@@ -98,7 +117,7 @@
                 <button class="d-btn" onclick="sendCmd('B')">⬇️</button>
             </div>
 
-            <!-- 中間/右側：停止與左右 -->
+            <!-- 右側搖桿：左右與停止 -->
             <div class="stick-group">
                 <span style="font-weight:bold; color:#555;">【 轉向與急停 】</span>
                 <div class="stick-row">
@@ -116,32 +135,49 @@
 
         async function connect() {
             try {
-                document.getElementById('status').innerText = '搜尋藍牙裝置中...';
+                // 檢查瀏覽器是否支援藍牙
+                if (!navigator.bluetooth) {
+                    alert('您的瀏覽器不支援 Web Bluetooth，請改用 Bluefy 或 Chrome！');
+                    return;
+                }
+
+                document.getElementById('status').style.color = '#f0ad4e';
+                document.getElementById('status').innerText = '狀態：正在掃描附近的藍牙車...';
                 
+                // 叫出藍牙裝置選擇視窗
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
                 });
 
-                document.getElementById('status').innerText = '連線中...';
+                document.getElementById('status').innerText = '狀態：正在建立藍牙通道 (GATT)...';
                 const server = await device.gatt.connect();
                 
+                document.getElementById('status').innerText = '狀態：正在配置序列埠服務...';
                 const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
                 bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
                 
-                document.getElementById('status').innerText = '🟢 連線成功！可以開始遙控';
+                // 連線成功，切換介面
+                document.getElementById('status.style.color'] = '#198754';
+                document.getElementById('status').innerText = '狀態：🟢 藍牙已連線，可以開始遙控！';
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('controls').style.display = 'block';
             } catch (error) {
                 console.log(error);
-                document.getElementById('status').innerText = '連線失敗或取消';
+                document.getElementById('status').style.color = '#d9534f';
+                document.getElementById('status').innerText = '狀態：❌ 連線失敗或您取消了藍牙選擇';
             }
         }
 
         async function sendCmd(cmd) {
             if (bleCharacteristic) {
-                let encoder = new TextEncoder();
-                await bleCharacteristic.writeValue(encoder.encode(cmd));
+                try {
+                    let encoder = new TextEncoder();
+                    await bleCharacteristic.writeValue(encoder.encode(cmd));
+                } catch (err) {
+                    console.log('發送失敗:', err);
+                    alert('藍牙連線可能已中斷，請重新整理網頁！');
+                }
             }
         }
     </script>
