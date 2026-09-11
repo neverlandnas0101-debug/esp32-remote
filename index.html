@@ -17,7 +17,21 @@
             margin: 0;
             padding: 10px;
         }
-        h2 { color: #333; margin: 10px 0; font-size: 20px; }
+        
+        /* 標題與圖片樣式 */
+        .title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .title-container img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        h2 { color: #333; margin: 0; font-size: 22px; }
         
         .bt-card {
             background: white;
@@ -164,7 +178,11 @@
     </style>
 </head>
 <body>
-    <h2>🚗 奇幻島 藍牙遙控機器人</h2>
+    <!-- 標題與圖片區塊 -->
+    <div class="title-container">
+        <!-- 這裡使用了一張可愛的機器人圖片作為範例，您也可以把 src 換成您自己的圖片網址 -->
+        <img src="logo.png" alt="奇幻島標誌">
+    </div>
 
     <div class="bt-card">
         <button id="connectBtn" onclick="connect()">📶 搜尋並開啟藍牙連線</button>
@@ -173,9 +191,8 @@
     </div>
 
     <div id="controls">
-        <!-- 新增：自動模式切換按鈕 -->
         <div class="mode-container">
-            <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動模式 (關閉)</button>
+            <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動避障 (關閉)</button>
         </div>
 
         <div class="joystick-container">
@@ -199,7 +216,7 @@
     <script>
         let bluetoothDevice;
         let bleCharacteristic;
-        let isAutoMode = false; // 記錄目前是否為自動模式
+        let isAutoMode = false;
 
         async function connect() {
             try {
@@ -239,18 +256,17 @@
             }
         }
 
-        // 切換自動模式按鈕的邏輯
         function toggleAutoMode() {
             isAutoMode = !isAutoMode;
             const autoBtn = document.getElementById('autoBtn');
             if (isAutoMode) {
                 autoBtn.classList.add('active');
-                autoBtn.innerText = '🤖 自動模式中 (點擊關閉)';
-                sendCmd('A'); // 發送自動模式指令 'A'
+                autoBtn.innerText = '🤖 自動避障中 (點擊關閉)';
+                sendCmd('A');
             } else {
                 autoBtn.classList.remove('active');
-                autoBtn.innerText = '🤖 切換自動模式 (關閉)';
-                sendCmd('S'); // 關閉時發送停止指令 'S' 回到手動
+                autoBtn.innerText = '🤖 切換自動避障 (關閉)';
+                sendCmd('S');
             }
         }
 
@@ -265,7 +281,7 @@
             bleCharacteristic = null;
             isAutoMode = false;
             document.getElementById('autoBtn').classList.remove('active');
-            document.getElementById('autoBtn').innerText = '🤖 切換自動模式 (關閉)';
+            document.getElementById('autoBtn').innerText = '🤖 切換自動避障 (關閉)';
             
             const statusEl = document.getElementById('status');
             statusEl.style.color = '#d9534f';
