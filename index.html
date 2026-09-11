@@ -35,10 +35,10 @@
             try {
                 document.getElementById('status').innerText = '搜尋中...';
                 // 請求連接帶有特定 UUID 的藍牙裝置
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'STEAM-藍牙遙控器' }], // 這裡對應您在 Python 裡設定的名字
-                    optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
-                });
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true, 
+                optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+            });
 
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
