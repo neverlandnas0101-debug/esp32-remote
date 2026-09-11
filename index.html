@@ -2,19 +2,21 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STEAM 藍牙遙控車</title>
     <style>
         body { 
             text-align: center; 
             font-family: sans-serif; 
             background-color: #f0f2f5; 
-            padding-top: 30px; 
+            margin: 0;
+            padding: 10px;
         }
-        h2 { color: #333; }
+        h2 { color: #333; margin: 10px 0; font-size: 20px; }
         
         #connectBtn { 
-            font-size: 20px; 
-            padding: 15px 30px; 
+            font-size: 18px; 
+            padding: 12px 25px; 
             background-color: #007bff; 
             color: white; 
             border: none; 
@@ -24,41 +26,61 @@
         }
         #connectBtn:active { background-color: #0056b3; }
 
-        #status { font-size: 16px; color: #666; margin: 15px 0; }
+        #status { font-size: 14px; color: #666; margin: 8px 0; }
 
+        /* 遙控器主畫面：左右雙搖桿配置 */
         #controls { 
             display: none; 
-            margin-top: 30px; 
+            margin-top: 15px; 
         }
-        .control-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 90px);
-            grid-template-rows: repeat(3, 90px);
-            gap: 12px;
-            justify-content: center;
+        .joystick-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .stick-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
             align-items: center;
         }
+        .stick-row {
+            display: flex;
+            gap: 15px;
+        }
+        /* 超大按鈕設計，方便手指操作 */
         .d-btn {
-            font-size: 28px;
+            font-size: 32px;
             background-color: #fff;
-            border: 2px solid #ccc;
-            border-radius: 15px;
+            border: 3px solid #ccc;
+            border-radius: 20px;
             cursor: pointer;
-            width: 90px;
-            height: 90px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 100px;
+            height: 100px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.1);
             transition: all 0.1s ease;
         }
         .d-btn:active {
-            background-color: #e2e6ea;
+            background-color: #d1e7dd;
+            border-color: #198754;
             transform: scale(0.95);
         }
-        .btn-up { grid-column: 2; grid-row: 1; }
-        .btn-left { grid-column: 1; grid-row: 2; }
-        .btn-stop { grid-column: 2; grid-row: 2; background-color: #ff4d4d; color: white; border: none; font-size: 20px; font-weight: bold;}
-        .btn-stop:active { background-color: #cc0000; }
-        .btn-right { grid-column: 3; grid-row: 2; }
-        .btn-down { grid-column: 2; grid-row: 3; }
+        .btn-stop {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .btn-stop:active { background-color: #cc0000; transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -66,13 +88,26 @@
     <button id="connectBtn" onclick="connect()">點擊連線藍牙車</button>
     <div id="status">尚未連線</div>
 
+    <!-- 雙手搖桿介面：左邊前後，右邊左右與停止 -->
     <div id="controls">
-        <div class="control-grid">
-            <button class="d-btn btn-up" onclick="sendCmd('F')">⬆️</button>
-            <button class="d-btn btn-left" onclick="sendCmd('L')">⬅️</button>
-            <button class="d-btn btn-stop" onclick="sendCmd('S')">停止</button>
-            <button class="d-btn btn-right" onclick="sendCmd('R')">➡️</button>
-            <button class="d-btn btn-down" onclick="sendCmd('B')">⬇️</button>
+        <div class="joystick-container">
+            <!-- 左側搖桿：前後 -->
+            <div class="stick-group">
+                <span style="font-weight:bold; color:#555;">【 前後移動 】</span>
+                <button class="d-btn" onclick="sendCmd('F')">⬆️</button>
+                <button class="d-btn" onclick="sendCmd('B')">⬇️</button>
+            </div>
+
+            <!-- 中間/右側：停止與左右 -->
+            <div class="stick-group">
+                <span style="font-weight:bold; color:#555;">【 轉向與急停 】</span>
+                <div class="stick-row">
+                    <button class="d-btn" onclick="sendCmd('L')">⬅️</button>
+                    <button class="btn-stop" onclick="sendCmd('S')">停止</button>
+                    <button class="d-btn" onclick="sendCmd('R')">➡️</button>
+                </div>
+                <div style="font-size: 12px; color: #888;">(左右轉向)</div>
+            </div>
         </div>
     </div>
 
