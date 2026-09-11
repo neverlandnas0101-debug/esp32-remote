@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>STEAM 藍牙遙控器</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; padding-top: 50px; }
+        button { font-size: 24px; padding: 20px 40px; margin: 10px; border-radius: 10px; }
+        #controls { display: none; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h2>ESP32-C3 遙控面板</h2>
+    <button id="connectBtn" onclick="connect()">連線到遙控車</button>
+    <h3 id="status">尚未連線</h3>
+
+    <div id="controls">
+        <div>
+            <button onclick="sendCmd('F')">前進 (F)</button>
+        </div>
+        <div>
+            <button onclick="sendCmd('L')">左轉 (L)</button>
+            <button onclick="sendCmd('S')">停止 (S)</button>
+            <button onclick="sendCmd('R')">右轉 (R)</button>
+        </div>
+        <div>
+            <button onclick="sendCmd('B')">後退 (B)</button>
+        </div>
+    </div>
+
+    <script>
+        let bleCharacteristic;
+
+        async function connect() {
+            try {
+                document.getElementById('status').innerText = '搜尋中...';
+                // 請求連接帶有特定 UUID 的藍牙裝置
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'STEAM-遙控燈' }], // 這裡對應您在 Python 裡設定的名字
+                    optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+                bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+                
+                document.getElementById('status').innerText = '連線成功！';
+                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('controls').style.display = 'block';
+            } catch (error) {
+                console.log(error);
+                document.getElementById('status').innerText = '連線失敗或取消';
+            }
+        }
+
+        async function sendCmd(cmd) {
+            if (bleCharacteristic) {
+                let encoder = new TextEncoder();
+                await bleCharacteristic.writeValue(encoder.encode(cmd));
+            }
+        }
+    </script>
+</body>
+</html>
