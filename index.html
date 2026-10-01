@@ -261,25 +261,36 @@
             <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動避障 (關閉)</button>
         </div>
 
-        <!-- 方向盤 -->
+<!-- 方向盤 -->
         <div class="joystick-container">
             <div class="stick-group">
                 <span class="group-title">【 前後 】</span>
-                <button class="d-btn" onclick="sendCmd('F')">⬆️</button>
-                <button class="d-btn" onclick="sendCmd('B')">⬇️</button>
+                <!-- onpointerdown：按住時傳送前進(F)。 onpointerup/leave：手指放開或滑走時傳送停止(S) -->
+                <button class="d-btn" 
+                        onpointerdown="sendCmd('F')" 
+                        onpointerup="sendCmd('S')" 
+                        onpointerleave="sendCmd('S')">⬆️</button>
+                <button class="d-btn" 
+                        onpointerdown="sendCmd('B')" 
+                        onpointerup="sendCmd('S')" 
+                        onpointerleave="sendCmd('S')">⬇️</button>
             </div>
 
             <div class="stick-group">
                 <span class="group-title">【 轉向 / 停止 】</span>
-                <button class="btn-stop" onclick="sendCmd('S')">🛑 停止</button>
+                <button class="btn-stop" onclick="sendCmd('S')">🛑 緊急停止</button>
                 <div class="stick-row">
-                    <button class="d-btn" onclick="sendCmd('L')">⬅️</button>
-                    <button class="d-btn" onclick="sendCmd('R')">➡️️</button>
+                    <button class="d-btn" 
+                            onpointerdown="sendCmd('L')" 
+                            onpointerup="sendCmd('S')" 
+                            onpointerleave="sendCmd('S')">⬅️</button>
+                    <button class="d-btn" 
+                            onpointerdown="sendCmd('R')" 
+                            onpointerup="sendCmd('S')" 
+                            onpointerleave="sendCmd('S')">➡️️</button>
                 </div>
             </div>
         </div>
-    </div>
-
     <script>
         let bluetoothDevice;
         let bleWriteCharacteristic; // 傳送指令用 (TX)
