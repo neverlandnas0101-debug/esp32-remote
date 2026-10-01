@@ -24,8 +24,8 @@
 
         .speed-container { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         .speed-btn-group { display: flex; justify-content: center; gap: 15px; }
-        .speed-btn { flex: 1; font-size: 16px; font-weight: bold; padding: 10px; background-color: #e9ecef; color: #495057; border: 2px solid #ced4da; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-        .speed-btn.active { background-color: #007bff; color: white; border-color: #0056b3; box-shadow: 0 3px 6px rgba(0,123,255,0.3); }
+        .speed-btn { flex: 1; font-size: 18px; font-weight: bold; padding: 12px; background-color: #e9ecef; color: #495057; border: 2px solid #ced4da; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .speed-btn.active { background-color: #007bff; color: white; border-color: #0056b3; box-shadow: 0 3px 6px rgba(0,123,255,0.3); transform: scale(1.05); }
 
         /* 雷達圖專屬樣式 */
         .radar-container { background: #051a05; border-radius: 12px; padding: 15px 10px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); color: #00ff00; }
@@ -60,11 +60,11 @@
     </div>
 
     <div id="controls">
+        <!-- 🌟 更新：簡化為兩個檔位，按鈕變大更直覺 -->
         <div class="speed-container">
             <span class="group-title">【 行駛檔位 】</span>
             <div class="speed-btn-group">
-                <button id="speed1" class="speed-btn" onclick="setSpeed(1)">🐢 慢</button>
-                <button id="speed2" class="speed-btn active" onclick="setSpeed(2)">🚗 中</button>
+                <button id="speed2" class="speed-btn active" onclick="setSpeed(2)">🚗 一般</button>
                 <button id="speed3" class="speed-btn" onclick="setSpeed(3)">🚀 快</button>
             </div>
         </div>
@@ -102,11 +102,11 @@
         let bleWriteCharacteristic; 
         let bleNotifyCharacteristic; 
         let isAutoMode = false;
-        let currentSpeed = 2; 
+        let currentSpeed = 2; // 預設對應 "一般"
         let receiveBuffer = ""; 
 
         // ==========================================
-        // 🌟 真實雷達動畫引擎 (Canvas 動態渲染)
+        // 真實雷達動畫引擎 (保留殘影與掃描動畫)
         // ==========================================
         const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
@@ -115,21 +115,18 @@
         const centerY = canvas.height - 10;
         
         let targetAngle = 90;       
-        let displayAngle = 0;       // 🌟 讓指針從 0 度開始
-        let scanDirection = 1;      // 🌟 控制掃描方向 (1: 往右, -1: 往左)
+        let displayAngle = 0;       
+        let scanDirection = 1;      
         let obstacleMemory = {};    
 
         function renderRadarLoop() {
-            // 1. 清除舊畫布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 2. 畫雷達底色
             ctx.beginPath();
             ctx.arc(centerX, centerY, radarRadius, Math.PI, 0);
             ctx.fillStyle = 'rgba(0, 30, 0, 0.8)';
             ctx.fill();
             
-            // 3. 畫同心圓與角度網格線
             ctx.strokeStyle = 'rgba(0, 180, 0, 0.5)';
             ctx.lineWidth = 1;
             for(let i=1; i<=3; i++) {
@@ -145,14 +142,12 @@
                 ctx.stroke();
             });
 
-            // 4. 🌟 動態指針動畫 (自動循環來回掃描)
-            displayAngle += scanDirection * 1.5; // 這裡的 1.5 是速度，數字越大掃越快
+            displayAngle += scanDirection * 1.5; 
             if (displayAngle >= 180) { displayAngle = 180; scanDirection = -1; }
             if (displayAngle <= 0) { displayAngle = 0; scanDirection = 1; }
             
             let currentRad = (180 - displayAngle) * Math.PI / 180;
 
-            // 🌟 畫出超酷的雷達漸層殘影
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radarRadius, currentRad, currentRad + (scanDirection * 0.35), scanDirection === -1);
@@ -160,7 +155,6 @@
             ctx.fillStyle = 'rgba(0, 255, 0, 0.25)';
             ctx.fill();
 
-            // 畫出目前的掃描指針 (亮綠色線)
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(centerX + Math.cos(currentRad) * radarRadius, centerY - Math.sin(currentRad) * radarRadius);
@@ -168,7 +162,6 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // 5. 畫出障礙物點 (支援多點與漸隱)
             let now = Date.now();
             let activeWarnings = [];
 
@@ -176,7 +169,6 @@
                 let b = obstacleMemory[ang];
                 let age = now - b.time;
                 
-                // 如果這個點超過 2.5 秒沒更新，就讓它慢慢淡出消失
                 if (age < 2500) {
                     let opacity = 1.0 - (age / 2500); 
                     
@@ -195,7 +187,6 @@
                 }
             }
 
-            // 6. 更新文字狀態
             const distEl = document.getElementById('radarDist');
             if (activeWarnings.length > 0) {
                 distEl.innerText = "⚠️ 障礙: " + activeWarnings.join(" | ");
@@ -205,10 +196,9 @@
                 distEl.style.color = '#00ff00';
             }
 
-            // 不斷重複繪製
             requestAnimationFrame(renderRadarLoop);
         }
-        // 啟動雷達動畫
+        
         renderRadarLoop();
 
         // ==========================================
@@ -218,7 +208,7 @@
             currentSpeed = level;
             document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('speed' + level).classList.add('active');
-            sendCmd('V' + level);
+            sendCmd('V' + level); // 發送 V2 (一般) 或 V3 (快)
         }
 
         async function connect() {
@@ -246,7 +236,7 @@
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('disconnectBtn').style.display = 'block';
                 document.getElementById('controls').style.display = 'block';
-                setSpeed(currentSpeed);
+                setSpeed(currentSpeed); // 連線後同步目前的檔位
             } catch (error) { document.getElementById('status').innerText = '狀態：❌ 連線失敗或已取消'; }
         }
 
@@ -263,9 +253,8 @@
                         let ang = parseInt(data[0]);
                         let dist = parseInt(data[1]);
                         
-                        targetAngle = ang; // 驅動動畫指針轉向
+                        targetAngle = ang; 
                         if (dist < 100 && dist > 0) {
-                            // 記錄障礙物與當下時間 (用來做殘影淡出)
                             obstacleMemory[ang] = { dist: dist, time: Date.now() };
                         }
                     }
