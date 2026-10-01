@@ -18,24 +18,23 @@
             padding: 10px;
         }
         
-        /* 標題與放大圖片區塊 (改為上下垂直排列) */
         .title-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin: 15px 0;
+            margin: 10px 0;
         }
         .title-container img {
-            width: 120px;   /* 放大圖片寬度 */
-            height: 120px;  /* 放大圖片高度 */
-            object-fit: cover; /* 確保照片不變形且填滿圓形或方形 */
-            border-radius: 50%; /* 如果希望照片變成圓形，可以保留這行；如果想要方框可以刪除 */
-            border: 3px solid #007bff; /* 加個漂亮的藍色邊框 */
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #007bff;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        h2 { color: #333; margin: 0; font-size: 24px; }
+        h2 { color: #333; margin: 0; font-size: 22px; }
         
         .bt-card {
             background: white;
@@ -77,27 +76,85 @@
 
         #status { font-size: 13px; color: #d9534f; font-weight: bold; }
 
-        /* 雙手遙控器面板 */
         #controls { 
             display: none; 
-            margin-top: 15px; 
+            margin-top: 10px; 
             width: 100%;
             max-width: 480px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* 自動模式切換按鈕專區 */
-        .mode-container {
-            margin-bottom: 15px;
-            width: 100%;
+        /* 區塊標題 */
+        .group-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 8px;
+            display: block;
         }
+
+        /* --- 檔位控制區 --- */
+        .speed-container {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .speed-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .speed-btn {
+            flex: 1;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 2px solid #ced4da;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .speed-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
+            box-shadow: 0 3px 6px rgba(0,123,255,0.3);
+        }
+
+        /* --- 雷達圖區 --- */
+        .radar-container {
+            background: #1e1e1e; /* 黑色雷達背景 */
+            border-radius: 12px;
+            padding: 15px 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            color: #00ff00;
+        }
+        .radar-container .group-title { color: #00ff00; }
+        #radarCanvas {
+            background-color: transparent;
+            display: block;
+            margin: 0 auto;
+        }
+        #radarDist {
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* --- 自動模式與方向盤 --- */
+        .mode-container { margin-bottom: 15px; width: 100%; }
         .btn-auto {
             font-size: 18px;
             font-weight: bold;
             padding: 12px;
             width: 100%;
-            max-width: 300px;
             background-color: #ffc107;
             color: #333;
             border: 2px solid #e0a800;
@@ -118,35 +175,23 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 0 10px;
+            padding: 0 5px;
         }
-
         .stick-group {
             display: flex;
             flex-direction: column;
             gap: 12px;
             align-items: center;
         }
-        .stick-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .group-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 2px;
-        }
-
+        .stick-row { display: flex; gap: 10px; }
         .d-btn {
             font-size: 32px;
             background-color: #ffffff;
             border: 2px solid #b8c2cc;
             border-radius: 18px;
             cursor: pointer;
-            width: 78px;
-            height: 78px;
+            width: 72px;
+            height: 72px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.08);
             display: flex;
             justify-content: center;
@@ -158,14 +203,13 @@
             border-color: #198754;
             transform: scale(0.93);
         }
-
         .btn-stop {
             background-color: #ff4d4d;
             border: 2px solid #d93838;
             color: white;
             font-size: 18px;
             font-weight: bold;
-            width: 166px;
+            width: 154px;
             height: 50px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(255,77,77,0.25);
@@ -182,7 +226,6 @@
     </style>
 </head>
 <body>
-    <!-- 標題與放大圖片區塊（圖片在上，文字在下） -->
     <div class="title-container">
         <img src="LOGO.jpg" alt="奇幻島標誌">
         <h2>奇幻島 藍牙智能機器人</h2>
@@ -195,10 +238,30 @@
     </div>
 
     <div id="controls">
+        
+        <!-- 檔位控制區 -->
+        <div class="speed-container">
+            <span class="group-title">【 行駛檔位 】</span>
+            <div class="speed-btn-group">
+                <button id="speed1" class="speed-btn" onclick="setSpeed(1)">🐢 慢</button>
+                <button id="speed2" class="speed-btn active" onclick="setSpeed(2)">🚗 中</button>
+                <button id="speed3" class="speed-btn" onclick="setSpeed(3)">🚀 快</button>
+            </div>
+        </div>
+
+        <!-- 扇形雷達區 -->
+        <div class="radar-container">
+            <span class="group-title">【 超音波環境掃描雷達 】</span>
+            <canvas id="radarCanvas" width="280" height="150"></canvas>
+            <div id="radarDist">前方距離: 掃描中...</div>
+        </div>
+
+        <!-- 模式切換 -->
         <div class="mode-container">
             <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動避障 (關閉)</button>
         </div>
 
+        <!-- 方向盤 -->
         <div class="joystick-container">
             <div class="stick-group">
                 <span class="group-title">【 前後 】</span>
@@ -211,7 +274,7 @@
                 <button class="btn-stop" onclick="sendCmd('S')">🛑 停止</button>
                 <div class="stick-row">
                     <button class="d-btn" onclick="sendCmd('L')">⬅️</button>
-                    <button class="d-btn" onclick="sendCmd('R')">➡️</button>
+                    <button class="d-btn" onclick="sendCmd('R')">➡️️</button>
                 </div>
             </div>
         </div>
@@ -219,9 +282,91 @@
 
     <script>
         let bluetoothDevice;
-        let bleCharacteristic;
+        let bleWriteCharacteristic; // 傳送指令用 (TX)
+        let bleNotifyCharacteristic; // 接收資料用 (RX)
         let isAutoMode = false;
+        let currentSpeed = 2; // 預設中速
 
+        // --- 雷達繪圖邏輯 ---
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const radarRadius = 130;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height - 10;
+
+        function drawRadar(angle, distance) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 畫出雷達底色扇形
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radarRadius, Math.PI, 0);
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+            ctx.fill();
+            
+            // 畫出距離網格 (3圈)
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            ctx.lineWidth = 1;
+            for(let i=1; i<=3; i++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radarRadius * (i/3), Math.PI, 0);
+                ctx.stroke();
+            }
+
+            // 畫出角度輔助線
+            const angles = [0, 45, 90, 135, 180];
+            angles.forEach(deg => {
+                let rad = (180 - deg) * Math.PI / 180;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + Math.cos(rad) * radarRadius, centerY - Math.sin(rad) * radarRadius);
+                ctx.stroke();
+            });
+
+            // 如果有障礙物資料，畫出紅點標記 (最大掃描範圍預設 100cm)
+            if (distance < 999 && distance > 0) {
+                // 將車子的角度(90度為正前方) 轉為 Canvas 弧度
+                const rad = (180 - angle) * Math.PI / 180; 
+                let distRatio = Math.min(distance / 100, 1); 
+                
+                const pointX = centerX + Math.cos(rad) * radarRadius * distRatio;
+                const pointY = centerY - Math.sin(rad) * radarRadius * distRatio;
+
+                // 畫出紅點與掃描線
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(pointX, pointY);
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(pointX, pointY, 6, 0, Math.PI*2);
+                ctx.fillStyle = '#ff4d4d';
+                ctx.fill();
+                
+                document.getElementById('radarDist').innerText = `障礙物: ${distance} cm (角度: ${angle}°)`;
+                document.getElementById('radarDist').style.color = distance < 20 ? '#ff4d4d' : '#00ff00';
+            } else {
+                document.getElementById('radarDist').innerText = `前方安全 (無障礙物)`;
+                document.getElementById('radarDist').style.color = '#00ff00';
+            }
+        }
+        
+        // 初始化空雷達
+        drawRadar(90, 999);
+
+        // --- 檔位切換邏輯 ---
+        function setSpeed(level) {
+            currentSpeed = level;
+            // 更新按鈕外觀
+            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('speed' + level).classList.add('active');
+            
+            // 傳送調速指令給車子 (V1:慢, V2:中, V3:快)
+            sendCmd('V' + level);
+        }
+
+        // --- 藍牙連線與通訊邏輯 ---
         async function connect() {
             try {
                 if (!navigator.bluetooth) {
@@ -245,18 +390,48 @@
                 
                 statusEl.innerText = '狀態：正在配置序列埠服務...';
                 const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
-                bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+                
+                // 取得寫入(發送)特徵值
+                bleWriteCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+                
+                // 取得通知(接收)特徵值 (ESP32 UART TX 通常是 0003)
+                try {
+                    bleNotifyCharacteristic = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+                    await bleNotifyCharacteristic.startNotifications();
+                    bleNotifyCharacteristic.addEventListener('characteristicvaluechanged', handleReceiveData);
+                } catch(e) {
+                    console.log("車子目前沒有開啟雷達資料回傳通道");
+                }
                 
                 statusEl.style.color = '#198754';
                 statusEl.innerText = '狀態：🟢 藍牙已連線，可以開始遙控！';
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('disconnectBtn').style.display = 'block';
                 document.getElementById('controls').style.display = 'block';
+                
+                // 連線後自動同步目前的檔位給車子
+                setSpeed(currentSpeed);
+
             } catch (error) {
                 console.log(error);
                 const statusEl = document.getElementById('status');
                 statusEl.style.color = '#d9534f';
                 statusEl.innerText = '狀態：❌ 連線失敗或已取消選擇';
+            }
+        }
+
+        // 處理車子回傳的資料 (用於畫雷達圖)
+        function handleReceiveData(event) {
+            let value = new TextDecoder().decode(event.target.value);
+            value = value.trim();
+            // 假設車子回傳格式為 "R:90,15" (角度90, 距離15)
+            if(value.startsWith("R:")) {
+                let data = value.substring(2).split(",");
+                if(data.length === 2) {
+                    let angle = parseInt(data[0]);
+                    let dist = parseInt(data[1]);
+                    drawRadar(angle, dist);
+                }
             }
         }
 
@@ -282,7 +457,8 @@
         }
 
         function onDisconnected() {
-            bleCharacteristic = null;
+            bleWriteCharacteristic = null;
+            bleNotifyCharacteristic = null;
             isAutoMode = false;
             document.getElementById('autoBtn').classList.remove('active');
             document.getElementById('autoBtn').innerText = '🤖 切換自動避障 (關閉)';
@@ -296,10 +472,10 @@
         }
 
         async function sendCmd(cmd) {
-            if (bleCharacteristic) {
+            if (bleWriteCharacteristic) {
                 try {
                     let encoder = new TextEncoder();
-                    await bleCharacteristic.writeValue(encoder.encode(cmd));
+                    await bleWriteCharacteristic.writeValue(encoder.encode(cmd));
                 } catch (err) {
                     console.log('發送失敗:', err);
                     alert('藍牙連線中斷，請重新整理網頁！');
