@@ -56,7 +56,6 @@
 </head>
 <body>
     <div class="title-container">
-        <!-- 若您的 GitHub 根目錄沒有 LOGO.jpg，這裡的圖片可能會破圖，這是正常的 -->
         <img src="LOGO.jpg" alt="奇幻島標誌">
         <h2>奇幻島 藍牙智能機器人</h2>
     </div>
@@ -118,17 +117,14 @@
         let currentSpeed = 2; 
         let receiveBuffer = ""; 
 
-        // ==========================================
-        // 真實雷達動畫引擎 
-        // ==========================================
         const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
         const radarRadius = 130;
         const centerX = canvas.width / 2;
         const centerY = canvas.height - 10;
         
-        let targetAngle = 90;       
-        let displayAngle = 0;       
+        let targetAngle = 90;        
+        let displayAngle = 0;        
         let scanDirection = 1;      
         let obstacleMemory = {};    
 
@@ -214,14 +210,11 @@
         
         renderRadarLoop();
 
-        // ==========================================
-        // 藍牙通訊邏輯
-        // ==========================================
         function setSpeed(level) {
             currentSpeed = level;
             document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('speed' + level).classList.add('active');
-            sendCmd('V' + level); // 發送 V2 (一般) 或 V3 (快)
+            sendCmd('V' + level); 
         }
 
         async function connect() {
@@ -249,7 +242,7 @@
                 document.getElementById('connectBtn').style.display = 'none';
                 document.getElementById('disconnectBtn').style.display = 'block';
                 document.getElementById('controls').style.display = 'block';
-                setSpeed(currentSpeed); // 連線後同步目前的檔位
+                setSpeed(currentSpeed); 
             } catch (error) { document.getElementById('status').innerText = '狀態：❌ 連線失敗或已取消'; }
         }
 
@@ -281,10 +274,10 @@
             const autoBtn = document.getElementById('autoBtn');
             if (isAutoMode) {
                 autoBtn.classList.add('active'); autoBtn.innerText = '🤖 自動避障中 (點擊關閉)'; sendCmd('A');
-                speakOut("啟動自動避障"); // 自動模式提示音
+                speakOut("啟動自動避障"); 
             } else {
                 autoBtn.classList.remove('active'); autoBtn.innerText = '🤖 切換自動避障 (關閉)'; sendCmd('S');
-                speakOut("關閉自動避障"); // 關閉自動模式提示音
+                speakOut("關閉自動避障"); 
             }
         }
 
@@ -298,26 +291,22 @@
             document.getElementById('connectBtn').style.display = 'block';
             document.getElementById('disconnectBtn').style.display = 'none';
             document.getElementById('controls').style.display = 'none';
-            stopVoice(); // 斷線時自動關閉語音辨識
+            stopVoice(); 
         }
         
         async function sendCmd(cmd) { if (bleWriteCharacteristic) await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
 
-        // ==========================================
-        // Web Speech API 語音控制與反饋模組
-        // ==========================================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let isListening = false;
 
-        // 讓手機發出聲音的函數
         function speakOut(text) {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 先取消正在講的話，避免指令卡在一起
+                window.speechSynthesis.cancel(); 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-TW';
-                utterance.rate = 1.3; // 語速：1.3 倍速比較有活力
-                utterance.pitch = 1.2; // 音調稍高
+                utterance.rate = 1.3; 
+                utterance.pitch = 1.2; 
                 window.speechSynthesis.speak(utterance);
             }
         }
