@@ -38,6 +38,13 @@
         .btn-auto.active { background-color: #28a745; color: white; border-color: #1e7e34; }
         .btn-auto:active { transform: scale(0.97); }
 
+        /* --- 新增：語音遙控專屬樣式 --- */
+        .voice-container { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .btn-mic { font-size: 18px; font-weight: bold; padding: 12px; width: 100%; background-color: #e91e63; color: white; border: 2px solid #c2185b; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 8px rgba(233,30,99,0.25); transition: all 0.2s ease; }
+        .btn-mic.recording { animation: pulse 1.2s infinite; background-color: #ff1744; border-color: #d50000; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 4px 15px rgba(255,23,68,0.6); } 100% { transform: scale(1); } }
+        #voiceResult { margin-top: 8px; font-size: 14px; font-weight: bold; color: #007bff; min-height: 20px; }
+
         .joystick-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 5px; }
         .stick-group { display: flex; flex-direction: column; gap: 12px; align-items: center; }
         .stick-row { display: flex; gap: 10px; }
@@ -60,7 +67,6 @@
     </div>
 
     <div id="controls">
-        <!-- 🌟 更新：簡化為兩個檔位，按鈕變大更直覺 -->
         <div class="speed-container">
             <span class="group-title">【 行駛檔位 】</span>
             <div class="speed-btn-group">
@@ -69,7 +75,6 @@
             </div>
         </div>
 
-        <!-- 雷達圖區塊 -->
         <div class="radar-container">
             <span class="group-title">【 超音波環境掃描雷達 】</span>
             <canvas id="radarCanvas" width="280" height="150"></canvas>
@@ -78,6 +83,13 @@
 
         <div class="mode-container">
             <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動避障 (關閉)</button>
+        </div>
+
+        <!-- --- 新增：語音遙控區塊 --- -->
+        <div class="voice-container">
+            <span class="group-title">【 語音遙控 】</span>
+            <button id="btnMic" class="btn-mic" onclick="toggleVoice()">🎤 點擊開始語音控制</button>
+            <div id="voiceResult">等待指令...</div>
         </div>
 
         <div class="joystick-container">
@@ -102,7 +114,7 @@
         let bleWriteCharacteristic; 
         let bleNotifyCharacteristic; 
         let isAutoMode = false;
-        let currentSpeed = 2; // 預設對應 "一般"
+        let currentSpeed = 2; 
         let receiveBuffer = ""; 
 
         // ==========================================
@@ -274,6 +286,7 @@
         }
 
         function disconnectBLE() { if (bluetoothDevice) bluetoothDevice.gatt.disconnect(); onDisconnected(); }
+        
         function onDisconnected() {
             bleWriteCharacteristic = null; bleNotifyCharacteristic = null; isAutoMode = false;
             document.getElementById('autoBtn').classList.remove('active');
@@ -282,8 +295,75 @@
             document.getElementById('connectBtn').style.display = 'block';
             document.getElementById('disconnectBtn').style.display = 'none';
             document.getElementById('controls').style.display = 'none';
+            stopVoice(); // 斷線時自動關閉語音辨識
         }
+        
         async function sendCmd(cmd) { if (bleWriteCharacteristic) await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
+
+        // ==========================================
+        // 新增：Web Speech API 語音控制模組
+        // ==========================================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-TW';
+            recognition.continuous = true; // 保持持續聆聽
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const text = event.results[event.results.length - 1][0].transcript.trim();
+                document.getElementById('voiceResult').innerText = "辨識結果：" + text;
+
+                // 根據語音字串判斷並發送對應藍牙指令 (您可以自行增減關鍵字)
+                if (text.includes("前進") || text.includes("往前") || text.includes("走")) sendCmd('F');
+                else if (text.includes("後退") || text.includes("倒車")) sendCmd('B');
+                else if (text.includes("左轉")) sendCmd('L');
+                else if (text.includes("右轉")) sendCmd('R');
+                else if (text.includes("停") || text.includes("煞車")) sendCmd('S');
+                else if (text.includes("避障") || text.includes("自動")) toggleAutoMode();
+            };
+
+            recognition.onerror = (e) => {
+                console.error("語音辨識錯誤", e);
+                document.getElementById('voiceResult').innerText = "⚠️ 語音辨識錯誤或超時";
+                stopVoice();
+            };
+        }
+
+        function toggleVoice() {
+            if (!isListening) startVoice();
+            else stopVoice();
+        }
+
+        function startVoice() {
+            if (!recognition) {
+                alert("抱歉！您的瀏覽器不支援語音辨識，請使用 Android 的 Google Chrome。");
+                return;
+            }
+            try {
+                recognition.start();
+                isListening = true;
+                const btn = document.getElementById('btnMic');
+                btn.classList.add('recording');
+                btn.innerText = "🎙️ 聆聽中... (說「前進/後退」)";
+                document.getElementById('voiceResult').innerText = "請說出指令...";
+            } catch(e) {
+                console.log("語音啟動錯誤", e);
+            }
+        }
+
+        function stopVoice() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+            isListening = false;
+            const btn = document.getElementById('btnMic');
+            btn.classList.remove('recording');
+            btn.innerText = "🎤 點擊開始語音控制";
+        }
     </script>
 </body>
 </html>
