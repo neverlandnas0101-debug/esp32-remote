@@ -38,7 +38,7 @@
         .btn-auto.active { background-color: #28a745; color: white; border-color: #1e7e34; }
         .btn-auto:active { transform: scale(0.97); }
 
-        /* 語音遙控專屬樣式 (鍵盤輸入框) */
+        /* 語音遙控專屬樣式 */
         .voice-container { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         #keyboardVoiceInput { width: 100%; padding: 15px; font-size: 16px; border-radius: 10px; border: 2px solid #e91e63; text-align: center; font-weight: bold; color: #c2185b; outline: none; transition: all 0.2s; user-select: auto; -webkit-user-select: auto; }
         #keyboardVoiceInput:focus { border-color: #c2185b; box-shadow: 0 0 8px rgba(233,30,99,0.5); }
@@ -87,7 +87,7 @@
         <!-- 鍵盤聽寫遙控區塊 -->
         <div class="voice-container">
             <span class="group-title">【 語音遙控 (鍵盤聽寫專用) 】</span>
-            <input type="text" id="keyboardVoiceInput" placeholder="點此叫出鍵盤 ➔ 按麥克風說話 🎤">
+            <input type="text" id="keyboardVoiceInput" placeholder="點此叫出鍵盤 ➔ 按麥克風說話 🎤" onclick="unlockAudio()">
             <div id="voiceResult">等待輸入指令...</div>
         </div>
 
@@ -115,6 +115,7 @@
         let isAutoMode = false;
         let currentSpeed = 2; 
         let receiveBuffer = ""; 
+        let audioUnlocked = false; // 音訊解鎖狀態
 
         // --- 雷達繪圖邏輯 ---
         const canvas = document.getElementById('radarCanvas');
@@ -295,6 +296,15 @@
         }
         
         async function sendCmd(cmd) { if (bleWriteCharacteristic) await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
+
+        // --- 🌟 關鍵：解鎖手機瀏覽器語音權限的函數 ---
+        function unlockAudio() {
+            if (!audioUnlocked && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(""); // 靜音解鎖
+                window.speechSynthesis.speak(utterance);
+                audioUnlocked = true;
+            }
+        }
 
         // --- 語音朗讀函數 (聲音反饋) ---
         function speakOut(text) {
