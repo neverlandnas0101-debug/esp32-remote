@@ -38,11 +38,10 @@
         .btn-auto.active { background-color: #28a745; color: white; border-color: #1e7e34; }
         .btn-auto:active { transform: scale(0.97); }
 
-        /* 語音遙控專屬樣式 */
+        /* 語音遙控專屬樣式 (修改為鍵盤輸入框) */
         .voice-container { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-        .btn-mic { font-size: 18px; font-weight: bold; padding: 12px; width: 100%; background-color: #e91e63; color: white; border: 2px solid #c2185b; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 8px rgba(233,30,99,0.25); transition: all 0.2s ease; }
-        .btn-mic.recording { animation: pulse 1.2s infinite; background-color: #ff1744; border-color: #d50000; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 4px 15px rgba(255,23,68,0.6); } 100% { transform: scale(1); } }
+        #keyboardVoiceInput { width: 100%; padding: 15px; font-size: 16px; border-radius: 10px; border: 2px solid #e91e63; text-align: center; font-weight: bold; color: #c2185b; outline: none; transition: all 0.2s; user-select: auto; -webkit-user-select: auto; }
+        #keyboardVoiceInput:focus { border-color: #c2185b; box-shadow: 0 0 8px rgba(233,30,99,0.5); }
         #voiceResult { margin-top: 8px; font-size: 14px; font-weight: bold; color: #007bff; min-height: 20px; }
 
         .joystick-container { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 5px; }
@@ -85,11 +84,11 @@
             <button id="autoBtn" class="btn-auto" onclick="toggleAutoMode()">🤖 切換自動避障 (關閉)</button>
         </div>
 
-        <!-- 語音遙控區塊 -->
+        <!-- 鍵盤聽寫遙控區塊 -->
         <div class="voice-container">
-            <span class="group-title">【 語音遙控 】</span>
-            <button id="btnMic" class="btn-mic" onclick="toggleVoice()">🎤 點擊開始語音控制</button>
-            <div id="voiceResult">等待指令...</div>
+            <span class="group-title">【 語音遙控 (iOS 聽寫專用) 】</span>
+            <input type="text" id="keyboardVoiceInput" placeholder="點此叫出鍵盤 ➔ 按麥克風說話 🎤">
+            <div id="voiceResult">等待輸入指令...</div>
         </div>
 
         <div class="joystick-container">
@@ -117,6 +116,7 @@
         let currentSpeed = 2; 
         let receiveBuffer = ""; 
 
+        // --- 雷達繪圖邏輯 ---
         const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
         const radarRadius = 130;
@@ -210,6 +210,7 @@
         
         renderRadarLoop();
 
+        // --- 藍牙控制邏輯 ---
         function setSpeed(level) {
             currentSpeed = level;
             document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
@@ -274,10 +275,8 @@
             const autoBtn = document.getElementById('autoBtn');
             if (isAutoMode) {
                 autoBtn.classList.add('active'); autoBtn.innerText = '🤖 自動避障中 (點擊關閉)'; sendCmd('A');
-                speakOut("啟動自動避障"); 
             } else {
                 autoBtn.classList.remove('active'); autoBtn.innerText = '🤖 切換自動避障 (關閉)'; sendCmd('S');
-                speakOut("關閉自動避障"); 
             }
         }
 
@@ -291,115 +290,55 @@
             document.getElementById('connectBtn').style.display = 'block';
             document.getElementById('disconnectBtn').style.display = 'none';
             document.getElementById('controls').style.display = 'none';
-            stopVoice(); 
         }
         
         async function sendCmd(cmd) { if (bleWriteCharacteristic) await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isListening = false;
+        // --- 核心更新：iOS 鍵盤聽寫事件監聽器 ---
+        const voiceInput = document.getElementById('keyboardVoiceInput');
+        const voiceResult = document.getElementById('voiceResult');
 
-        function speakOut(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); 
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-TW';
-                utterance.rate = 1.3; 
-                utterance.pitch = 1.2; 
-                window.speechSynthesis.speak(utterance);
+        // 監聽輸入框的文字變化 (當 iOS 聽寫把文字打上去時，就會觸發)
+        voiceInput.addEventListener('input', function(e) {
+            let text = e.target.value.trim();
+            if (!text) return;
+
+            voiceResult.innerText = "聽到指令：" + text;
+            let commandMatched = false;
+
+            // 判斷關鍵字並發送藍牙指令
+            if (text.includes("前進") || text.includes("往前") || text.includes("走")) {
+                sendCmd('F');
+                commandMatched = true;
             }
-        }
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'zh-TW';
-            recognition.continuous = true; 
-            recognition.interimResults = false;
-
-            recognition.onresult = (event) => {
-                const text = event.results[event.results.length - 1][0].transcript.trim();
-                document.getElementById('voiceResult').innerText = "辨識結果：" + text;
-
-                if (text.includes("前進") || text.includes("往前") || text.includes("走")) {
-                    sendCmd('F');
-                    speakOut("衝啊！");
-                }
-                else if (text.includes("後退") || text.includes("倒車")) {
-                    sendCmd('B');
-                    speakOut("巴庫巴庫");
-                }
-                else if (text.includes("左轉")) {
-                    sendCmd('L');
-                    speakOut("向左轉");
-                }
-                else if (text.includes("右轉")) {
-                    sendCmd('R');
-                    speakOut("向右轉");
-                }
-                else if (text.includes("停") || text.includes("煞車")) {
-                    sendCmd('S');
-                    speakOut("緊急煞車");
-                }
-                else if (text.includes("避障") || text.includes("自動")) {
-                    if (!isAutoMode) toggleAutoMode();
-                }
-            };
-
-            recognition.onerror = (e) => {
-                console.error("語音辨識錯誤", e);
-                document.getElementById('voiceResult').innerText = "⚠️ 語音辨識錯誤或超時";
-                stopVoice();
-            };
-        }
-
-        function toggleVoice() {
-            if (!isListening) startVoice();
-            else stopVoice();
-        }
-
-        // 🌟 更新版：加入強制逼迫 iOS 跳出麥克風授權視窗的機制
-        async function startVoice() {
-            if (!recognition) {
-                alert("抱歉！您的瀏覽器不支援語音辨識，請使用 Android 的 Google Chrome。");
-                return;
+            else if (text.includes("後退") || text.includes("倒車")) {
+                sendCmd('B');
+                commandMatched = true;
+            }
+            else if (text.includes("左轉")) {
+                sendCmd('L');
+                commandMatched = true;
+            }
+            else if (text.includes("右轉")) {
+                sendCmd('R');
+                commandMatched = true;
+            }
+            else if (text.includes("停") || text.includes("煞車")) {
+                sendCmd('S');
+                commandMatched = true;
+            }
+            else if (text.includes("避障") || text.includes("自動")) {
+                if (!isAutoMode) toggleAutoMode();
+                commandMatched = true;
             }
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop());
-            } catch (err) {
-                alert("⚠️ 無法取得麥克風權限！系統可能已強制阻擋。");
-                document.getElementById('voiceResult').innerText = "麥克風權限遭拒";
-                return;
+            // 如果有配對到任何指令，延遲 0.8 秒後自動清空輸入框，方便講下一句指令
+            if (commandMatched) {
+                setTimeout(() => {
+                    voiceInput.value = "";
+                }, 800);
             }
-
-            try {
-                recognition.start();
-                isListening = true;
-                const btn = document.getElementById('btnMic');
-                btn.classList.add('recording');
-                btn.innerText = "🎙️ 聆聽中... (說「前進/後退」)";
-                document.getElementById('voiceResult').innerText = "請說出指令...";
-                
-                // 🌟 關鍵修改：把這行註解掉，不要讓 iOS 喇叭出聲干擾麥克風！
-                // speakOut("語音遙控已啟動"); 
-                
-            } catch(e) {
-                console.log("語音啟動錯誤", e);
-            }
-        }
-
-        function stopVoice() {
-            if (recognition && isListening) {
-                recognition.stop();
-            }
-            isListening = false;
-            const btn = document.getElementById('btnMic');
-            btn.classList.remove('recording');
-            btn.innerText = "🎤 點擊開始語音控制";
-            speakOut("已關閉語音");
-        }
+        });
     </script>
 </body>
 </html>
