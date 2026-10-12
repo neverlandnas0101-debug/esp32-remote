@@ -366,12 +366,10 @@
             }
 
             try {
-                // 強制喚起麥克風存取要求
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // 成功取得權限後，立刻關閉這條音訊流，以免佔用資源
                 stream.getTracks().forEach(track => track.stop());
             } catch (err) {
-                alert("⚠️ 無法取得麥克風權限！系統可能已強制阻擋或 App 本身不支援語音功能。");
+                alert("⚠️ 無法取得麥克風權限！系統可能已強制阻擋。");
                 document.getElementById('voiceResult').innerText = "麥克風權限遭拒";
                 return;
             }
@@ -383,7 +381,10 @@
                 btn.classList.add('recording');
                 btn.innerText = "🎙️ 聆聽中... (說「前進/後退」)";
                 document.getElementById('voiceResult').innerText = "請說出指令...";
-                speakOut("語音遙控已啟動"); 
+                
+                // 🌟 關鍵修改：把這行註解掉，不要讓 iOS 喇叭出聲干擾麥克風！
+                // speakOut("語音遙控已啟動"); 
+                
             } catch(e) {
                 console.log("語音啟動錯誤", e);
             }
