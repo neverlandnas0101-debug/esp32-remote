@@ -27,7 +27,6 @@
         .speed-btn { flex: 1; font-size: 18px; font-weight: bold; padding: 12px; background-color: #e9ecef; color: #495057; border: 2px solid #ced4da; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
         .speed-btn.active { background-color: #007bff; color: white; border-color: #0056b3; box-shadow: 0 3px 6px rgba(0,123,255,0.3); transform: scale(1.05); }
 
-        /* 雷達圖專屬樣式 */
         .radar-container { background: #051a05; border-radius: 12px; padding: 15px 10px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); color: #00ff00; }
         .radar-container .group-title { color: #00ff00; }
         #radarCanvas { background-color: transparent; display: block; margin: 0 auto; filter: drop-shadow(0 0 5px rgba(0,255,0,0.3)); }
@@ -38,7 +37,6 @@
         .btn-auto.active { background-color: #28a745; color: white; border-color: #1e7e34; }
         .btn-auto:active { transform: scale(0.97); }
 
-        /* 語音遙控專屬樣式 */
         .voice-container { background: white; border-radius: 12px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         #keyboardVoiceInput { width: 100%; padding: 15px; font-size: 16px; border-radius: 10px; border: 2px solid #e91e63; text-align: center; font-weight: bold; color: #c2185b; outline: none; transition: all 0.2s; user-select: auto; -webkit-user-select: auto; }
         #keyboardVoiceInput:focus { border-color: #c2185b; box-shadow: 0 0 8px rgba(233,30,99,0.5); }
@@ -115,7 +113,7 @@
         let isAutoMode = false;
         let currentSpeed = 2; 
         let receiveBuffer = ""; 
-        let audioUnlocked = false; // 音訊解鎖狀態
+        let audioUnlocked = false; 
 
         // --- 雷達繪圖邏輯 ---
         const canvas = document.getElementById('radarCanvas');
@@ -297,16 +295,16 @@
         
         async function sendCmd(cmd) { if (bleWriteCharacteristic) await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
 
-        // --- 🌟 關鍵：解鎖手機瀏覽器語音權限的函數 ---
+        // --- 解鎖手機瀏覽器語音權限 ---
         function unlockAudio() {
             if (!audioUnlocked && 'speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(""); // 靜音解鎖
+                const utterance = new SpeechSynthesisUtterance(""); 
                 window.speechSynthesis.speak(utterance);
                 audioUnlocked = true;
             }
         }
 
-        // --- 語音朗讀函數 (聲音反饋) ---
+        // --- 語音朗讀函數 ---
         function speakOut(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
@@ -318,11 +316,7 @@
             }
         }
 
-        // --- 鍵盤聽寫監聽器與語音反饋整合 ---
-        const voiceInput = document.getElementById('keyboardVoiceInput');
-        const voiceResult = document.getElementById('voiceResult');
-
-     // --- 鍵盤聽寫監聽器與語音反饋整合 ---
+        // --- 鍵盤聽寫監聽器與語音反饋、自動煞車整合 ---
         const voiceInput = document.getElementById('keyboardVoiceInput');
         const voiceResult = document.getElementById('voiceResult');
 
@@ -347,14 +341,14 @@
                 sendCmd('L');
                 speakOut("向左轉");
                 commandMatched = true;
-                // 🌟 語音專屬：0.5 秒 (500毫秒) 後自動發送煞車指令
+                // 左轉 0.5 秒後自動煞車
                 setTimeout(() => { sendCmd('S'); }, 500);
             }
             else if (text.includes("右轉")) {
                 sendCmd('R');
                 speakOut("向右轉");
                 commandMatched = true;
-                // 🌟 語音專屬：0.5 秒 (500毫秒) 後自動發送煞車指令
+                // 右轉 0.5 秒後自動煞車
                 setTimeout(() => { sendCmd('S'); }, 500);
             }
             else if (text.includes("停") || text.includes("煞車")) {
