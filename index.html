@@ -322,6 +322,10 @@
         const voiceInput = document.getElementById('keyboardVoiceInput');
         const voiceResult = document.getElementById('voiceResult');
 
+     // --- 鍵盤聽寫監聽器與語音反饋整合 ---
+        const voiceInput = document.getElementById('keyboardVoiceInput');
+        const voiceResult = document.getElementById('voiceResult');
+
         voiceInput.addEventListener('input', function(e) {
             let text = e.target.value.trim();
             if (!text) return;
@@ -343,18 +347,22 @@
                 sendCmd('L');
                 speakOut("向左轉");
                 commandMatched = true;
+                // 🌟 語音專屬：0.5 秒 (500毫秒) 後自動發送煞車指令
+                setTimeout(() => { sendCmd('S'); }, 500);
             }
             else if (text.includes("右轉")) {
                 sendCmd('R');
                 speakOut("向右轉");
                 commandMatched = true;
+                // 🌟 語音專屬：0.5 秒 (500毫秒) 後自動發送煞車指令
+                setTimeout(() => { sendCmd('S'); }, 500);
             }
             else if (text.includes("停") || text.includes("煞車")) {
                 sendCmd('S');
                 speakOut("緊急煞車");
                 commandMatched = true;
             }
-            else if (text.includes("自動") || text.includes("自動避障")) {
+            else if (text.includes("避障") || text.includes("自動")) {
                 if (!isAutoMode) toggleAutoMode();
                 commandMatched = true;
             }
