@@ -84,7 +84,7 @@
 
         <!-- 鍵盤聽寫遙控區塊 -->
         <div class="voice-container">
-            <span class="group-title">【 語音遙控 (鍵盤聽寫專用) 】</span>
+            <span class="group-title">【 語音遙控 (連續聽寫專用) 】</span>
             <input type="text" id="keyboardVoiceInput" placeholder="點此叫出鍵盤 ➔ 按麥克風說話 🎤" onclick="unlockAudio()">
             <div id="voiceResult">等待輸入指令...</div>
         </div>
@@ -114,11 +114,11 @@
         let currentSpeed = 2; 
         let receiveBuffer = ""; 
         let audioUnlocked = false; 
-        
-        // 🌟 新增：專門用來記憶車子「持續狀態」的變數
         let lastContinuousCmd = 'S'; 
+        
+        // 🌟 新增：記錄已經讀取到哪裡，避免重複讀取舊指令
+        let processedTextIndex = 0; 
 
-        // --- 雷達繪圖邏輯 ---
         const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
         const radarRadius = 130;
@@ -212,7 +212,6 @@
         
         renderRadarLoop();
 
-        // --- 藍牙控制邏輯 ---
         function setSpeed(level) {
             currentSpeed = level;
             document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
@@ -296,19 +295,15 @@
             document.getElementById('controls').style.display = 'none';
         }
         
-        // 🌟 核心修改：發送指令時，自動記錄前進/後退/煞車的狀態
         async function sendCmd(cmd) { 
-            // 只要指令是 F, B, 或 S，就更新記憶
             if (cmd === 'F' || cmd === 'B' || cmd === 'S') {
                 lastContinuousCmd = cmd;
             }
-
             if (bleWriteCharacteristic) {
                 await bleWriteCharacteristic.writeValue(new TextEncoder().encode(cmd)); 
             }
         }
 
-        // --- 解鎖手機瀏覽器語音權限 ---
         function unlockAudio() {
             if (!audioUnlocked && 'speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(""); 
@@ -317,7 +312,6 @@
             }
         }
 
-        // --- 語音朗讀函數 ---
         function speakOut(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
@@ -329,57 +323,71 @@
             }
         }
 
-        // --- 鍵盤聽寫監聽器與記憶恢復機制整合 ---
         const voiceInput = document.getElementById('keyboardVoiceInput');
         const voiceResult = document.getElementById('voiceResult');
 
+        // 🌟 核心修改：無縫連續聽寫監聽器
         voiceInput.addEventListener('input', function(e) {
-            let text = e.target.value.trim();
-            if (!text) return;
+            let fullText = e.target.value;
 
-            voiceResult.innerText = "聽到指令：" + text;
+            // 如果使用者手動把字刪掉，我們就把紀錄點歸零
+            if (fullText.length < processedTextIndex) {
+                processedTextIndex = 0;
+            }
+
+            // 只截取「還沒處理過」的最新字串
+            let newText = fullText.substring(processedTextIndex);
+            if (!newText) return;
+
+            voiceResult.innerText = "連續指令擷取：" + fullText;
             let commandMatched = false;
 
-            if (text.includes("前進") || text.includes("往前") || text.includes("走")) {
+            if (newText.includes("前進") || newText.includes("往前") || newText.includes("走")) {
                 sendCmd('F');
                 speakOut("衝啊！");
                 commandMatched = true;
             }
-            else if (text.includes("後退") || text.includes("倒車")) {
+            else if (newText.includes("後退") || newText.includes("倒車")) {
                 sendCmd('B');
                 speakOut("巴庫巴庫");
                 commandMatched = true;
             }
-            else if (text.includes("左轉")) {
+            else if (newText.includes("左轉")) {
                 sendCmd('L');
                 speakOut("向左轉");
                 commandMatched = true;
-                // 🌟 左轉 0.5 秒後，不再盲目發送 S，而是發送剛剛記憶的狀態
                 setTimeout(() => { sendCmd(lastContinuousCmd); }, 500);
             }
-            else if (text.includes("右轉")) {
+            else if (newText.includes("右轉")) {
                 sendCmd('R');
                 speakOut("向右轉");
                 commandMatched = true;
-                // 🌟 右轉 0.5 秒後，不再盲目發送 S，而是發送剛剛記憶的狀態
                 setTimeout(() => { sendCmd(lastContinuousCmd); }, 500);
             }
-            else if (text.includes("停") || text.includes("煞車")) {
+            else if (newText.includes("停") || newText.includes("煞車")) {
                 sendCmd('S');
                 speakOut("緊急煞車");
                 commandMatched = true;
             }
-            else if (text.includes("避障") || text.includes("自動")) {
+            else if (newText.includes("避障") || newText.includes("自動")) {
                 if (!isAutoMode) toggleAutoMode();
                 commandMatched = true;
             }
 
+            // 如果有觸發指令，把「紀錄點」推到現在字串的最後面，等待下一句話！
+            // 絕對不去清空輸入框 (不執行 voiceInput.value = "")，這樣麥克風就不會斷！
             if (commandMatched) {
-                setTimeout(() => {
-                    voiceInput.value = "";
-                }, 800);
+                processedTextIndex = fullText.length;
             }
         });
+
+        // 只有當使用者「關閉鍵盤」或「點擊其他地方」時，才默默把輸入框清空歸零
+        voiceInput.addEventListener('blur', function() {
+            voiceInput.value = "";
+            processedTextIndex = 0;
+            voiceResult.innerText = "等待輸入指令...";
+        });
+
     </script>
 </body>
 </html>
