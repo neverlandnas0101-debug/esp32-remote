@@ -226,8 +226,11 @@
                 statusEl.style.color = '#f0ad4e'; statusEl.innerText = '狀態：正在掃描附近的藍牙車...';
                 
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] }],
-                    optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+                    filters: [
+                    { namePrefix: 'Fantasy' }, // 抓新名字
+                    { namePrefix: 'Esp' }      // 抓被 iPhone 記住的舊名字
+                ],
+                optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
                 });
                 bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
                 const server = await bluetoothDevice.gatt.connect();
